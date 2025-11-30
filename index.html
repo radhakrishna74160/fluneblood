@@ -3,97 +3,288 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>BGF — Email + Google Sign-in</title>
+<title>Fluneblood — Blood Group Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-  :root{--bg:#f5f9fc;--accent:#d43b48;--accent-2:#96223b;--muted:#4b5563}
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),#eef6fb);color:#0f172a;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
-  .wrap{width:100%;max-width:720px}
-  .card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 10px 30px rgba(2,6,23,0.06);border:1px solid rgba(2,6,23,0.03)}
-  h1{margin:0 0 6px;font-size:20px}
-  p.lead{margin:0 0 12px;color:var(--muted)}
-  .cols{display:grid;grid-template-columns:1fr 360px;gap:18px}
-  @media(max-width:900px){ .cols{grid-template-columns:1fr} }
-  input,select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(2,6,23,0.06);margin-top:8px}
-  .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:white;cursor:pointer;font-weight:700}
-  .ghost{background:transparent;border:1px solid rgba(2,6,23,0.06);color:var(--muted);padding:10px;border-radius:10px}
-  .googleBtn{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid rgba(2,6,23,0.06);background:white;cursor:pointer}
-  .note{font-size:13px;color:var(--muted);margin-top:8px}
-  .debug{font-family:monospace;color:#b91c1c;margin-top:10px}
+  :root {
+    --primary: #be123c;       /* Deep Blood Red */
+    --primary-light: #fda4af; /* Soft Pink */
+    --bg-dark: #0f172a;       /* Deep Navy */
+    --text-dark: #1e293b;
+    --text-light: #64748b;
+    --white: #ffffff;
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #f1f5f9;
+    color: var(--text-dark);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* --- Layout Architecture --- */
+  .auth-container {
+    width: 100%;
+    max-width: 1100px;
+    height: 700px; 
+    background: var(--white);
+    border-radius: 32px;
+    box-shadow: var(--shadow-lg);
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr; /* Split Screen for System */
+    overflow: hidden;
+    position: relative;
+    margin: 20px;
+  }
+
+  /* --- LEFT PANEL: Brand Visuals --- */
+  .visual-panel {
+    background: linear-gradient(135deg, #881337 0%, #be123c 100%);
+    position: relative;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    color: white;
+    overflow: hidden;
+  }
+
+  /* Animated Blobs */
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(50px);
+    opacity: 0.6;
+    animation: float 10s infinite ease-in-out;
+  }
+  .b1 { width: 350px; height: 350px; background: #fb7185; top: -100px; left: -100px; }
+  .b2 { width: 400px; height: 400px; background: #9f1239; bottom: -120px; right: -80px; animation-delay: -2s; }
+  
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(20px, -20px); }
+  }
+
+  /* Brand Text */
+  .visual-content { position: relative; z-index: 2; }
+  
+  .tag {
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    padding: 6px 14px;
+    border-radius: 100px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255,255,255,0.15);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 10px #4ade80; }
+
+  .visual-content h1 {
+    font-size: 52px;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+  
+  .visual-content p {
+    font-size: 18px;
+    opacity: 0.9;
+    margin-top: 16px;
+    max-width: 450px;
+    line-height: 1.6;
+    font-weight: 400;
+  }
+
+  /* --- RIGHT PANEL: Action --- */
+  .action-panel {
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    background: var(--white);
+  }
+
+  /* Top Logo Area (System View) */
+  .top-logo {
+    position: absolute;
+    top: 40px;
+    left: 40px;
+    font-weight: 800;
+    color: var(--primary);
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .login-box { width: 100%; max-width: 380px; }
+  .login-box h2 { font-size: 32px; margin: 0 0 10px 0; color: var(--text-dark); letter-spacing: -0.5px; }
+  .login-box p { color: var(--text-light); margin: 0 0 40px 0; font-size: 16px; line-height: 1.5; }
+
+  /* Google Button */
+  .googleBtn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 16px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text-dark);
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  .googleBtn:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05);
+    background: #f8fafc;
+  }
+  .googleBtn:active { transform: translateY(0); }
+
+  /* Messages */
+  .status-msg { margin-top: 20px; font-size: 14px; font-weight: 600; min-height: 24px; color: var(--primary); }
+  
+  .secure-badge {
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-light);
+    opacity: 0.8;
+  }
+
+  /* --- MOBILE / PHONE RESPONSIVENESS --- */
+  @media (max-width: 900px) {
+    body { background: #fff; } /* Clean white background on mobile */
+    
+    .auth-container { 
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 100%;
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    /* Mobile Header */
+    .visual-panel { 
+      flex: 0 0 35%; /* Takes top 35% of screen */
+      padding: 30px; 
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      border-radius: 0 0 30px 30px; /* Modern curve at bottom */
+      z-index: 1;
+    }
+
+    .visual-content h1 { font-size: 32px; }
+    .visual-content p { display: none; } /* Hide description on phones to save space */
+    .tag { display: none; } /* Simplify mobile view */
+
+    /* Mobile Content */
+    .action-panel {
+      flex: 1;
+      padding: 40px 24px;
+      margin-top: -20px; /* Slight overlap */
+      border-radius: 30px 30px 0 0;
+      z-index: 2;
+      justify-content: flex-start; /* Start from top */
+      padding-top: 60px;
+    }
+    
+    .top-logo { display: none; } /* Hide duplicate logo on mobile */
+    .login-box h2 { font-size: 26px; }
+  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card" role="main" aria-labelledby="title">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <h1 id="title">Blood Group Finder</h1>
-          <p class="lead">Register / Login with Email or continue with Google. After sign-in you'll go to the directory.</p>
-        </div>
-        <div style="text-align:right;color:var(--muted)">Secure • Firebase</div>
+
+  <div class="auth-container">
+    
+    <div class="visual-panel">
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+
+      <div class="visual-content">
+        <div class="tag"><div class="dot"></div> Online Now</div>
+        <h1 id="title">Fluneblood</h1>
+        <p>Connecting donors, hospitals, and patients in a unified real-time network.</p>
+      </div>
+    </div>
+
+    <div class="action-panel">
+      
+      <div class="top-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        Blood Group Finder
       </div>
 
-      <div style="margin-top:12px" class="cols">
-        <!-- left: email form -->
-        <div>
-          <div style="background:linear-gradient(180deg,#fff,#fbfbff);padding:12px;border-radius:12px;border:1px solid rgba(2,6,23,0.03)">
-            <label for="email">Email</label>
-            <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
-            <label for="password">Password</label>
-            <input id="password" type="password" placeholder="Password (min 6)" autocomplete="current-password" />
-            <div style="display:flex;gap:8px;margin-top:12px">
-              <button id="actionBtn" class="btn">Register</button>
-              <button id="clearBtn" class="ghost">Clear</button>
-            </div>
-            <div style="margin-top:10px" class="note" id="msg"></div>
-            <div id="debug" class="debug" aria-live="polite"></div>
-            <div style="margin-top:8px" class="note">Tip: enable Email/Password and Google in Firebase Console and add <code>localhost</code> to Authorized domains.</div>
-          </div>
+      <div class="login-box">
+        <h2>Welcome Back</h2>
+        <p>Sign in securely to access the directory.</p>
+
+        <div id="btnGoogle" class="googleBtn" role="button" aria-label="Continue with Google">
+          <svg width="24" height="24" viewBox="0 0 533.5 544.3"><path fill="#4285f4" d="M533.5 278.4c0-18.5-1.5-37.2-4.7-55.1H272v104.2h146.9c-6.4 34.6-25.9 64-55.2 83.6v69.6h89.1c52.1-47.9 82.7-118.8 82.7-202.3z"/><path fill="#34a853" d="M272 544.3c74 0 136.1-24.6 181.5-66.9l-89.1-69.6c-24.8 16.6-56.8 26.4-92.4 26.4-71 0-131.2-47.9-152.7-112.3H29.1v70.7C74.6 487.4 169.2 544.3 272 544.3z"/><path fill="#fbbc04" d="M119.3 328.2c-10.8-32.7-10.8-68 0-100.7v-70.7H29.1C10.3 203.6 0 239.3 0 276.4s10.3 72.8 29.1 106.9l90.2-55.1z"/><path fill="#ea4335" d="M272 108.8c39.8 0 75.6 13.7 103.8 40.6l77.7-77.7C405.7 24.5 344 0 272 0 169.2 0 74.6 56.9 29.1 142.1l90.2 70.7C140.8 156.7 201 108.8 272 108.8z"/></svg>
+          Continue with Google
         </div>
-
-        <!-- right: Google + quick info -->
-        <aside style="display:flex;flex-direction:column;gap:12px">
-          <div style="background:linear-gradient(180deg,#fff,#fbfbff);padding:12px;border-radius:12px;border:1px solid rgba(2,6,23,0.03)">
-            <div class="googleBtn" id="btnGoogle" role="button" aria-label="Continue with Google">
-              <svg width="20" height="20" viewBox="0 0 533.5 544.3"><path fill="#4285f4" d="M533.5 278.4c0-18.5-1.5-37.2-4.7-55.1H272v104.2h146.9c-6.4 34.6-25.9 64-55.2 83.6v69.6h89.1c52.1-47.9 82.7-118.8 82.7-202.3z"/><path fill="#34a853" d="M272 544.3c74 0 136.1-24.6 181.5-66.9l-89.1-69.6c-24.8 16.6-56.8 26.4-92.4 26.4-71 0-131.2-47.9-152.7-112.3H29.1v70.7C74.6 487.4 169.2 544.3 272 544.3z"/><path fill="#fbbc04" d="M119.3 328.2c-10.8-32.7-10.8-68 0-100.7v-70.7H29.1C10.3 203.6 0 239.3 0 276.4s10.3 72.8 29.1 106.9l90.2-55.1z"/><path fill="#ea4335" d="M272 108.8c39.8 0 75.6 13.7 103.8 40.6l77.7-77.7C405.7 24.5 344 0 272 0 169.2 0 74.6 56.9 29.1 142.1l90.2 70.7C140.8 156.7 201 108.8 272 108.8z"/></svg>
-              <strong>Continue with Google</strong>
-            </div>
-            <div class="note" style="margin-top:8px">If popup blocked, the app falls back to redirect mode automatically.</div>
-          </div>
-
-          <div style="background:linear-gradient(180deg,#fff,#fbfbff);padding:12px;border-radius:12px;border:1px solid rgba(2,6,23,0.03)">
-            <strong>How it works</strong>
-            <div class="note">After sign-in we create a `users/{uid}` doc (email & timestamp) if missing and redirect to <code>blood-finder.html</code>.</div>
-          </div>
-        </aside>
+        
+        <div id="msg" class="status-msg" aria-live="polite"></div>
       </div>
+
+      <div class="secure-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        Secured by Firebase
+      </div>
+
     </div>
   </div>
 
 <script type="module">
-// ---------- Firebase modular imports ----------
+/* Firebase modular imports */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import {
   getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   onAuthStateChanged,
-  signOut
+  setPersistence,
+  browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-
-// ---------- Firebase config (your project) ----------
+/* Firebase config (use your keys) */
 const firebaseConfig = {
   apiKey: "AIzaSyB3xlua10Vnqrf0kXrwXa-I02nkVSC8nWo",
   authDomain: "fluneblood.firebaseapp.com",
@@ -107,128 +298,64 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
-// ---------- DOM elements ----------
-const emailInput = document.getElementById('email');
-const passInput = document.getElementById('password');
-const actionBtn = document.getElementById('actionBtn');
-const clearBtn = document.getElementById('clearBtn');
+const googleBtn = document.getElementById('btnGoogle');
 const msg = document.getElementById('msg');
-const debugEl = document.getElementById('debug');
-const btnGoogle = document.getElementById('btnGoogle');
 
-// ---------- helpers ----------
-function showMessage(t){ msg.textContent = t || ''; }
-function debug(t){ console.log('[BGF]', t); debugEl.textContent = t || ''; }
-function redirectToFinder(){ window.location.href = 'blood-finder.html'; }
+function log(s){ console.log('[BGF]', s); msg.textContent = s || ''; }
 
-// ensure minimal users/{uid} doc exists
+// set persistence (IIFE to avoid top-level await)
+(async function(){
+  try{ await setPersistence(auth, browserLocalPersistence); log(''); }
+  catch(e){ console.warn('setPersistence failed', e); log('Auth persistence fallback'); }
+})();
+
+// ensure minimal user doc exists
 async function ensureUserDoc(user){
   if(!user || !user.uid) return;
   try{
     const ref = doc(db, 'users', user.uid);
     const snap = await getDoc(ref);
     if(!snap.exists()){
-      await setDoc(ref, {
-        email: user.email || null,
-        createdAt: serverTimestamp(),
-        isAdmin: false
-      }, { merge: true });
-      debug('Created user doc for ' + user.uid);
-    } else debug('User doc already exists for ' + user.uid);
-  }catch(err){
-    console.error('ensureUserDoc error', err);
-    debug('Failed to create user doc: ' + (err.message||err.code));
-  }
+      await setDoc(ref, { email: user.email || null, createdAt: serverTimestamp(), isAdmin: false }, { merge: true });
+      log('Creating profile...');
+    } else {
+      log('Loading profile...');
+    }
+  }catch(err){ console.error('ensureUserDoc', err); log('DB error: ' + (err.message||err.code)); }
 }
 
-// ---------- Email register/login ----------
-let mode = 'register'; // initial mode
-actionBtn.addEventListener('click', async () => {
-  const email = (emailInput.value||'').trim();
-  const password = passInput.value || '';
-  if(!email || !password){ showMessage('Enter email and password'); return; }
-  showMessage('Processing...');
-  debug('');
-  try{
-    if(mode === 'register'){
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      showMessage('Registered & signed in');
-      await ensureUserDoc(cred.user);
-      redirectToFinder();
-    } else {
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-      showMessage('Login successful');
-      await ensureUserDoc(cred.user);
-      redirectToFinder();
-    }
-  }catch(err){
-    console.error('Auth error', err);
-    // user-friendly messages for common codes
-    let text = err && err.message ? err.message : 'Auth failed';
-    if(err.code === 'auth/email-already-in-use') text = 'Email already registered — try Login.';
-    if(err.code === 'auth/invalid-email') text = 'Invalid email address.';
-    if(err.code === 'auth/weak-password') text = 'Weak password — use 6+ characters.';
-    if(err.code === 'auth/wrong-password') text = 'Wrong password.';
-    if(err.code === 'auth/user-not-found') text = 'No account found for this email.';
-    showMessage(text);
-    debug(JSON.stringify({ code: err.code, message: err.message }));
-  }
-});
-clearBtn.addEventListener('click', ()=>{ emailInput.value=''; passInput.value=''; showMessage(''); debug(''); });
-
-// Toggle mode when user clicks action button text (simple UX)
-actionBtn.addEventListener('contextmenu', (e)=>{ e.preventDefault(); mode = mode==='register' ? 'login' : 'register'; actionBtn.textContent = mode==='register' ? 'Register' : 'Login'; showMessage('Mode switched to '+mode); });
-
-// ---------- Google sign-in (popup -> redirect fallback) ----------
-btnGoogle.addEventListener('click', async () => {
-  showMessage('Opening Google sign-in...');
-  debug('Trying signInWithPopup...');
+// Google sign-in flow: popup, fallback to redirect
+googleBtn.addEventListener('click', async ()=>{
+  log('Connecting to Google...');
   const provider = new GoogleAuthProvider();
   try{
-    const result = await signInWithPopup(auth, provider);
-    debug('Popup sign-in success: ' + (result.user && result.user.uid));
-    await ensureUserDoc(result.user);
-    redirectToFinder();
+    const res = await signInWithPopup(auth, provider);
+    log('Success! Redirecting...');
+    await ensureUserDoc(res.user);
+    // onAuthStateChanged will redirect
   }catch(err){
-    console.warn('Popup error', err.code || err.message);
-    debug('Popup failed: ' + (err.code || err.message) + ' — attempting redirect fallback');
-    // fallback to redirect (works when popup blocked)
-    try{
-      await signInWithRedirect(auth, provider);
-      // page will navigate to Google; after redirect, onAuthStateChanged and getRedirectResult handle the rest
-    }catch(e2){
-      console.error('Redirect fallback failed', e2);
-      showMessage('Google sign-in failed: ' + (e2.message || e2.code));
-    }
+    console.warn('Popup failed', err);
+    log('Popup failed, trying redirect...');
+    try{ await signInWithRedirect(auth, provider); }catch(e){ console.error('Redirect failed', e); log('Google sign-in failed'); }
   }
 });
 
-// handle redirect result (best-effort; onAuthStateChanged will also run)
-(async function handleRedirectResult(){
+// handle redirect result if present
+(async function handleRedirect(){
   try{
-    const res = await getRedirectResult(auth);
-    if(res && res.user){
-      debug('getRedirectResult user: ' + res.user.uid);
-      await ensureUserDoc(res.user);
-      redirectToFinder();
-    }
-  }catch(e){
-    // silent; handled by onAuthStateChanged fallback
-    debug('getRedirectResult err: ' + (e && (e.code||e.message)));
-  }
+    const r = await getRedirectResult(auth);
+    if(r && r.user){ await ensureUserDoc(r.user); log('Success! Redirecting...'); }
+  }catch(e){ /* ignore */ }
 })();
 
-// ---------- auth state: redirect if already signed in ----------
-onAuthStateChanged(auth, async (user) => {
+// when signed in, redirect to directory
+onAuthStateChanged(auth, async (user)=>{
   if(user){
-    debug('onAuthStateChanged signed in: ' + user.uid);
+    log('Verified: ' + user.email);
     await ensureUserDoc(user);
-    // small delay to show message then redirect
-    showMessage('Signed in — redirecting...');
-    setTimeout(()=> redirectToFinder(), 500);
+    setTimeout(()=> window.location.href = 'blood-finder.html', 800);
   } else {
-    debug('Not signed in');
+    log('');
   }
 });
 </script>
