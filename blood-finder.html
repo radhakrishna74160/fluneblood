@@ -3,122 +3,433 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Blood Group Finder — Directory (Firebase)</title>
+<title>Fluneblood — Donor Directory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-  :root{
-    --bg:#f5f9fc;--panel:#fff;--muted:#4b5563;--accent:#d43b48;--accent-2:#96223b;--radius:12px
+  :root {
+    --primary: #be123c;
+    --primary-dark: #881337;
+    --primary-light: #fda4af;
+    --bg-body: #f8fafc;
+    --surface: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --radius: 20px;
+    --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 20px 40px -5px rgba(190, 18, 60, 0.15);
   }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),#eef6fb);color:#0f172a;min-height:100vh;padding:18px;display:flex;justify-content:center}
-  .wrap{width:100%;max-width:1100px}
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .brand{display:flex;gap:12px;align-items:center}
-  .logo{width:62px;height:62px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:white;display:flex;align-items:center;justify-content:center;font-weight:800}
-  h1{margin:0;font-size:20px}
-  .main{display:grid;grid-template-columns:360px 1fr;gap:18px;margin-top:18px}
-  .panel{background:var(--panel);border-radius:var(--radius);padding:14px;border:1px solid rgba(2,6,23,0.03);box-shadow:0 10px 30px rgba(2,6,23,0.06)}
-  .small{font-size:13px;color:var(--muted)}
-  .btn{padding:10px 12px;border-radius:10px;border:0;background:var(--accent);color:white;cursor:pointer;font-weight:700}
-  .btn.ghost{background:transparent;border:1px solid rgba(2,6,23,0.06);color:var(--muted)}
-  .tabs{display:flex;gap:8px;flex-wrap:wrap}
-  .tab{padding:8px 10px;border-radius:10px;background:rgba(0,0,0,0.03);cursor:pointer;font-weight:700}
-  .tab.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white}
-  .searchRow{display:flex;gap:8px;margin-top:12px}
-  .searchRow input{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(2,6,23,0.06)}
-  .donor{padding:12px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfbff);border:1px solid rgba(2,6,23,0.03);margin-bottom:10px}
-  .donorName{font-weight:700}
-  .donorMeta{color:var(--muted);font-size:13px}
-  .pill{padding:6px 8px;border-radius:8px;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;font-weight:700}
-  label{display:block;margin-top:8px;color:var(--muted)}
-  input, select {width:100%;padding:10px;border-radius:8px;border:1px solid rgba(2,6,23,0.06);margin-top:6px}
-  .hidden{display:none}
-  .note{font-size:13px;color:var(--muted);margin-top:8px}
-  .callBtn{padding:8px 10px;border-radius:8px;border:1px solid rgba(2,6,23,0.06);background:transparent;color:var(--accent);font-weight:700;cursor:pointer}
-  .callBtn.disabled{opacity:0.55;cursor:not-allowed;color:var(--muted);border-style:dashed}
-  @media(max-width:980px){.main{grid-template-columns:1fr}}
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    min-height: 100vh;
+  }
+
+  /* --- Layout Grid --- */
+  .dashboard-wrap {
+    display: grid;
+    grid-template-columns: 380px 1fr; /* Fixed Sidebar, Fluid Content */
+    gap: 30px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 30px;
+    height: 100vh;
+    overflow: hidden; /* Prevent body scroll, handle internally */
+  }
+
+  /* --- Sidebar (Profile & Brand) --- */
+  aside {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+    overflow-y: auto;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border);
+  }
+
+  /* Brand Header in Sidebar */
+  .brand-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand-logo {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    box-shadow: 0 8px 16px rgba(190, 18, 60, 0.3);
+  }
+  .brand-text h1 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .brand-text span { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+  /* Profile Card Design */
+  .profile-card {
+    background: #fff1f2; /* Very light pink bg */
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #fecdd3;
+  }
+  .profile-card h3 { margin: 0 0 5px 0; color: var(--primary-dark); font-size: 16px; }
+  
+  #authStatus {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 15px;
+    display: inline-block;
+  }
+
+  #profileName { font-size: 20px; font-weight: 700; color: var(--text-main); }
+  #profileMeta { font-size: 14px; color: var(--text-muted); margin-bottom: 15px; }
+
+  /* Buttons */
+  .btn {
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    text-align: center;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(190, 18, 60, 0.2);
+  }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+  
+  .btn.ghost {
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .btn.ghost:hover { border-color: var(--text-main); color: var(--text-main); }
+
+  .actions-row { display: flex; gap: 10px; margin-top: 10px; }
+
+  /* Forms */
+  input, select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    margin-top: 6px;
+    margin-bottom: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    transition: 0.2s;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(190, 18, 60, 0.1);
+  }
+  label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* --- Main Content Area --- */
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Search & Filter Bar */
+  .top-bar {
+    background: var(--surface);
+    padding: 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .search-row { display: flex; gap: 10px; }
+  .search-row input { margin: 0; background: var(--bg-body); border: none; }
+  .search-row input:focus { background: white; box-shadow: 0 0 0 2px var(--primary); }
+
+  /* Tabs (Pills) */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    scrollbar-width: none; /* Hide scrollbar Firefox */
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    padding: 8px 16px;
+    background: var(--bg-body);
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .tab:hover { background: #e2e8f0; }
+  .tab.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 10px rgba(190, 18, 60, 0.3);
+  }
+
+  /* List Container */
+  #listContainer {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Grid Layout */
+    gap: 20px;
+    padding-bottom: 40px;
+  }
+
+  /* --- THE DONOR CARD (Injected HTML Styling) --- */
+  .donor {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .donor:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary-light);
+  }
+
+  /* Red accent bar on top of card */
+  .donor::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  }
+
+  .donorName {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 4px;
+  }
+  
+  .donorMeta {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Blood Drop Badge (Replaces simple Pill) */
+  .pill {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary), #9f1239);
+    color: white;
+    border-radius: 50% 50% 50% 0; /* Drop shape */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    transform: rotate(-45deg);
+    box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
+    margin-bottom: 10px;
+  }
+  /* Fix text rotation inside the drop */
+  .pill::after {
+    content: attr(data-text); /* Requires JS tweak or just rotate text */
+  }
+
+  /* Call Button */
+  .callBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px;
+    background: #ecfdf5; /* Light Green bg */
+    color: #059669; /* Green text */
+    font-weight: 700;
+    border-radius: 10px;
+    text-decoration: none;
+    margin-top: 15px;
+    border: 1px solid #d1fae5;
+    transition: 0.2s;
+  }
+  .callBtn:hover {
+    background: #10b981;
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+  .callBtn.disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    border-style: dashed;
+    border-color: #cbd5e1;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  /* Admin Table */
+  .adminTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 20px;
+  }
+  .adminTable th { text-align: left; color: var(--text-muted); padding: 10px; border-bottom: 2px solid var(--border); }
+  .adminTable td { padding: 10px; border-bottom: 1px solid var(--border); }
+
+  .hidden { display: none !important; }
+
+  /* --- Mobile Responsive --- */
+  @media (max-width: 900px) {
+    .dashboard-wrap {
+      grid-template-columns: 1fr;
+      padding: 15px;
+      height: auto;
+      overflow: visible;
+    }
+    aside { height: auto; margin-bottom: 20px; }
+    #listContainer { grid-template-columns: 1fr; }
+    
+    /* Make blood group drop upright on card for mobile */
+    .pill { transform: rotate(0); border-radius: 12px; width: auto; height: auto; padding: 4px 10px; display: inline-block; margin: 0; }
+  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="brand"><div class="logo">BG</div><div><h1>Blood Group Finder</h1><div class="small">Tap Call to contact donors</div></div></div>
-      <div id="topControls" class="small">Realtime • Firebase</div>
-    </header>
 
-    <div class="main">
-      <!-- left: auth/profile -->
-      <aside>
-        <div class="panel" id="authPanel">
-          <h3 style="margin:0 0 6px">Status</h3>
-          <div id="authStatus" class="small">Checking auth...</div>
+  <div class="dashboard-wrap">
+    
+    <aside>
+      <div class="brand-header">
+        <div class="brand-logo">BF</div>
+        <div class="brand-text">
+          <h1>Fluneblood</h1>
+          <span>Medical Directory</span>
+        </div>
+      </div>
 
-          <!-- Profile display -->
-          <div id="profileArea" style="margin-top:10px;display:none">
-            <div id="profileName" style="font-weight:700">—</div>
-            <div id="profileMeta" class="small">—</div>
-            <div style="margin-top:10px;display:flex;gap:8px">
-              <button class="btn" id="btnBack">Back to Login</button>
-              <button class="btn ghost" id="btnLogout">Logout</button>
-            </div>
-          </div>
+      <div id="authPanel">
+        <div id="authStatus">Checking security...</div>
 
-          <!-- PROFILE FORM for missing details -->
-          <div id="profileForm" class="hidden" style="margin-top:12px">
-            <h4 style="margin:0 0 6px">Complete your donor profile</h4>
-            <label>Full name</label>
-            <input id="pf_name" placeholder="Your full name" />
-            <label>City</label>
-            <input id="pf_city" placeholder="City/locality" />
-            <label>Mobile</label>
-            <input id="pf_phone" placeholder="Mobile number" inputmode="tel" />
-            <label>Blood group</label>
-            <select id="pf_group">
-              <option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
-            </select>
-            <div style="margin-top:10px;display:flex;gap:8px">
-              <button id="pf_save" class="btn">Save Profile</button>
-              <button id="pf_skip" class="btn ghost">Skip</button>
-            </div>
-            <div id="pf_msg" class="note"></div>
+        <div id="profileArea" style="display:none">
+          <div class="profile-card">
+             <h3>My Donor Card</h3>
+             <div id="profileName">—</div>
+             <div id="profileMeta">—</div>
+             
+             <div class="actions-row">
+               <button class="btn btn-primary" id="btnEdit">Edit Profile</button>
+               <button class="btn ghost" id="btnLogout">Sign Out</button>
+             </div>
           </div>
         </div>
 
-        <div class="panel" id="summaryPanel" style="margin-top:14px;display:none">
-          <h3 style="margin-top:0">Group Summary</h3>
-          <div id="groupSummary" class="small">Loading…</div>
-        </div>
-      </aside>
-
-      <!-- right: directory -->
-      <section>
-        <div class="panel">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div class="tabs" id="tabs"></div>
-              <div class="searchRow"><input id="searchInput" placeholder="Search name, city or phone" /><button id="refreshBtn" class="btn ghost">Refresh</button></div>
+        <div id="profileForm" class="hidden">
+           <div class="profile-card" style="border-color:var(--primary);">
+            <h3 style="color:var(--primary)">Edit Details</h3>
+            <label>Full name</label><input id="pf_name" placeholder="John Doe" />
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div><label>Age</label><input id="pf_age" type="number" min="1" placeholder="25" /></div>
+              <div><label>Group</label>
+              <select id="pf_group">
+                <option value="">--</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+              </select></div>
             </div>
-            <div id="userPanel" class="small" style="text-align:right">—</div>
-          </div>
 
-          <div id="listContainer" style="margin-top:12px"></div>
-
-          <div id="adminPanel" style="display:none;margin-top:12px"></div>
+            <label>City</label><input id="pf_city" placeholder="New York" />
+            <label>Mobile (Required)</label><input id="pf_phone" placeholder="+1 555 000 0000" inputmode="tel" />
+            
+            <div class="actions-row">
+              <button id="pf_save" class="btn btn-primary">Save Changes</button>
+              <button id="pf_cancel" class="btn ghost">Cancel</button>
+            </div>
+            <div id="pf_msg" style="font-size:12px; color:var(--primary); margin-top:10px;"></div>
+           </div>
         </div>
-      </section>
+      </div>
+
+      <div id="summaryPanel" class="profile-card" style="display:none; margin-top:20px; background:#f8fafc; border-color:#e2e8f0;">
+        <h3 style="color:var(--text-main)">Database Stats</h3>
+        <div id="groupSummary" style="font-size:12px; line-height:1.6; color:var(--text-muted)">Loading…</div>
+      </div>
+
+      <div id="userPanel" style="font-size:11px; color:#94a3b8; text-align:center; margin-top:auto;">
+        Secure Context • Firebase Auth
+      </div>
+    </aside>
+
+
+    <div class="main-content">
+      
+      <div class="top-bar">
+        <div class="search-row">
+          <input id="searchInput" placeholder="Search by name, city, or phone..." />
+          <button id="refreshBtn" class="btn ghost" style="width:auto">Refresh</button>
+        </div>
+        <div class="tabs" id="tabs">
+          </div>
+      </div>
+
+      <div id="listContainer">
+        </div>
+
+      <div id="adminPanel" style="display:none; padding:20px; background:white; border-radius:16px; margin-top:20px;"></div>
     </div>
 
-    <div style="margin-top:14px" class="small">Note: to grant admin, set <code>isAdmin: true</code> on the user's Firestore document in the Firebase console.</div>
   </div>
 
 <script type="module">
 /* Firebase imports */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, collection, query, orderBy, onSnapshot, deleteDoc, where, getDocs, serverTimestamp
+  getFirestore, doc, getDoc, setDoc, collection, query, orderBy, onSnapshot, deleteDoc, where, getDocs, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-/* ===== Firebase config (fluneblood) ===== */
+/* Firebase config */
 const firebaseConfig = {
   apiKey: "AIzaSyB3xlua10Vnqrf0kXrwXa-I02nkVSC8nWo",
   authDomain: "fluneblood.firebaseapp.com",
@@ -133,170 +444,252 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* DOM helpers */
-const $ = id => document.getElementById(id);
-
-/* Small safe display helpers */
-function h(s){ return (s||'').toString().replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
-function disp(s){ return s ? h(s) : '—'; }
-function safeDate(ts){
-  if(!ts) return '—';
-  try{
-    if(typeof ts.toDate === 'function') return ts.toDate().toLocaleDateString();
-    if(ts.seconds) return new Date(ts.seconds*1000).toLocaleDateString();
-    return new Date(ts).toLocaleDateString();
-  }catch(e){ return '—'; }
+// ensure auth persistence (so user remains signed in across refresh)
+try {
+  await setPersistence(auth, browserLocalPersistence);
+  console.log('[BGF] Auth persistence set: local (survives refresh)');
+} catch (e) {
+  console.warn('[BGF] setPersistence failed:', e);
 }
 
-/* Elements */
+// show a small loading indicator while we determine auth + profile
+let initialLoadDone = false;
+function showLoadingState(on){
+  const statusEl = document.getElementById('authStatus');
+  if(!statusEl) return;
+  statusEl.textContent = on ? 'Verifying credentials…' : '';
+}
+
+/* DOM helpers */
+const $ = id => document.getElementById(id);
 const authStatus = $('authStatus'), profileArea = $('profileArea'), profileName = $('profileName'), profileMeta = $('profileMeta');
-const btnBack = $('btnBack'), btnLogout = $('btnLogout');
-const profileForm = $('profileForm'), pf_name = $('pf_name'), pf_city = $('pf_city'), pf_phone = $('pf_phone'), pf_group = $('pf_group'), pf_save = $('pf_save'), pf_skip = $('pf_skip'), pf_msg = $('pf_msg');
+const btnEdit = $('btnEdit'), btnLogout = $('btnLogout');
+const profileForm = $('profileForm'), pf_name = $('pf_name'), pf_age = $('pf_age'), pf_city = $('pf_city'), pf_phone = $('pf_phone'), pf_group = $('pf_group'), pf_save = $('pf_save'), pf_cancel = $('pf_cancel'), pf_msg = $('pf_msg');
 const summaryPanel = $('summaryPanel'), groupSummary = $('groupSummary');
 const tabsEl = $('tabs'), listContainer = $('listContainer');
 const searchInput = $('searchInput'), refreshBtn = $('refreshBtn');
 const userPanel = $('userPanel'), adminPanel = $('adminPanel');
 
-/* State */
+function h(s){ return (s||'').toString().replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function disp(s){ return s ? h(s) : 'Anonymous'; }
+function safeDate(ts){
+  if(!ts) return '—';
+  try{ if(typeof ts.toDate === 'function') return ts.toDate().toLocaleDateString(); if(ts.seconds) return new Date(ts.seconds*1000).toLocaleDateString(); return new Date(ts).toLocaleDateString(); }
+  catch(e){ return '—'; }
+}
+
+/* App state */
 let users = [];
 let currentUser = null;
 const GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
 
 /* Buttons */
-btnBack.addEventListener('click', ()=> location.href = 'index.html');
-btnLogout.addEventListener('click', async ()=> { if(confirm('Sign out?')) await signOut(auth); });
+btnLogout.addEventListener('click', async () => {
+  if (!confirm('Sign out?')) return;
+  try {
+    await signOut(auth);
+    window.location.href = 'index.html';
+  } catch (err) {
+    console.error('Sign out failed', err);
+    alert('Sign out failed: ' + (err.message || err.code || err));
+  }
+});
+btnEdit.addEventListener('click', ()=> showEditForm(currentUser));
 
-/* Real-time users listener */
+/* Realtime users collection listener */
 const usersCol = collection(db, 'users');
 const usersQuery = query(usersCol, orderBy('createdAt','desc'));
 onSnapshot(usersQuery, snapshot => {
+  // raw users from Firestore
   users = snapshot.docs.map(d => ({ uid: d.id, ...d.data() }));
+  // keep UI in sync
   renderPublicTabs();
   renderGroup(activeGroup || 'ALL');
   renderSummary();
   renderAdminPanel();
 });
 
-/* Auth check and profile flow */
+/* Auth state handling */
 onAuthStateChanged(auth, async (user) => {
-  if(user){
-    try{
+  showLoadingState(true);
+  try {
+    if (user) {
+      // fetch profile from Firestore before updating UI
       const uRef = doc(db, 'users', user.uid);
       const uSnap = await getDoc(uRef);
       const docData = uSnap.exists() ? uSnap.data() : null;
       currentUser = { uid: user.uid, email: user.email, ...docData };
+      window.currentUser = currentUser;
 
-      authStatus.textContent = 'Signed in';
+      authStatus.textContent = '● Online';
+      authStatus.style.color = '#10b981'; // Green dot
       profileArea.style.display = 'block';
-      profileName.textContent = currentUser.name ? disp(currentUser.name) : (currentUser.email ? disp(currentUser.email) : '—');
-      profileMeta.textContent = (currentUser.group ? disp(currentUser.group)+' • ' : '') + (currentUser.city ? disp(currentUser.city) : '');
+      profileName.textContent = currentUser.name ? h(currentUser.name) : (currentUser.email ? h(currentUser.email) : 'Anonymous');
+      profileMeta.textContent = (currentUser.group ? h(currentUser.group)+' • ' : '') + (currentUser.city ? h(currentUser.city) : '');
 
-      const missing = !currentUser.city || !currentUser.phone || !currentUser.group;
-      if(missing){
-        showProfileForm(currentUser);
-      } else {
-        hideProfileForm();
-      }
+      if(!currentUser.phone) showEditForm(currentUser); else hideEditForm();
 
       if(currentUser.isAdmin){ summaryPanel.style.display = 'block'; adminPanel.style.display = 'block'; } else { summaryPanel.style.display = 'none'; adminPanel.style.display = 'none'; }
       renderUserPanel();
-    }catch(err){
-      console.error('Error loading user doc', err);
+      console.log('[BGF] Signed-in user loaded, uid=', user.uid);
+    } else {
+      window.currentUser = currentUser = null;
+      authStatus.textContent = 'Not signed in';
+      authStatus.style.color = 'var(--text-muted)';
+      profileArea.style.display = 'none';
+      hideEditForm();
+      summaryPanel.style.display = 'none';
+      adminPanel.style.display = 'none';
+      renderPublicTabs();
+      renderGroup('ALL');
+      console.log('[BGF] User not signed in');
+    }
+  } catch (err) {
+    console.error('[BGF] Error reading user doc after auth:', err);
+    if (user) {
       currentUser = { uid: user.uid, email: user.email };
-      profileName.textContent = currentUser.email ? disp(currentUser.email) : '—';
-      profileMeta.textContent = '';
-      showProfileForm(currentUser);
+      if (typeof showEditForm === 'function') showEditForm(currentUser);
       profileArea.style.display = 'block';
     }
-  } else {
-    currentUser = null;
-    authStatus.textContent = 'Not signed in';
-    profileArea.style.display = 'none';
-    hideProfileForm();
-    summaryPanel.style.display = 'none';
-    adminPanel.style.display = 'none';
-    renderPublicTabs();
-    renderGroup('ALL');
+  } finally {
+    showLoadingState(false);
+    initialLoadDone = true;
   }
 });
 
 /* Show / hide profile form */
-function showProfileForm(prefill){
+function showEditForm(prefill){
   profileForm.classList.remove('hidden');
   profileArea.style.display = 'none';
   pf_name.value = prefill && prefill.name ? prefill.name : '';
+  pf_age.value = prefill && prefill.age ? prefill.age : '';
   pf_city.value = prefill && prefill.city ? prefill.city : '';
   pf_phone.value = prefill && prefill.phone ? prefill.phone : '';
   pf_group.value = prefill && prefill.group ? prefill.group : '';
-  pf_msg.textContent = 'Please complete these details to appear in donor list.';
+  pf_msg.textContent = 'Fill phone number to join list.';
 }
-
-function hideProfileForm(){
+function hideEditForm(){
   profileForm.classList.add('hidden');
   profileArea.style.display = 'block';
   pf_msg.textContent = '';
 }
 
 /* Save profile action */
-pf_save.addEventListener('click', async ()=>{
+pf_save.addEventListener('click', async () => {
   if(!currentUser || !currentUser.uid){ pf_msg.textContent = 'Not authenticated.'; return; }
+
   const name = (pf_name.value||'').trim();
+  const ageVal = (pf_age.value||'').toString().trim();
+  const age = ageVal ? parseInt(ageVal, 10) : null;
   const city = (pf_city.value||'').trim();
   const phone = (pf_phone.value||'').trim();
   const group = (pf_group.value||'').trim();
-  if(!city || !phone || !group){ pf_msg.textContent = 'City, Mobile and Blood group are required.'; return; }
+
+  if(!phone){
+    pf_msg.textContent = 'Mobile is required.';
+    return;
+  }
+
+  if(age !== null && (isNaN(age) || age < 1 || age > 120)){
+    pf_msg.textContent = 'Invalid age.';
+    return;
+  }
+
   pf_msg.textContent = 'Saving…';
   try{
-    const uRef = doc(db, 'users', currentUser.uid);
-    // optional duplicate phone check
-    const phoneQ = query(collection(db,'users'), where('phone','==', phone));
+    // Check conflicts
+    const phoneQ = query(collection(db, 'users'), where('phone', '==', phone));
     const phoneRes = await getDocs(phoneQ);
-    if(!phoneRes.empty){
-      const conflict = phoneRes.docs.some(d => d.id !== currentUser.uid);
-      if(conflict && !confirm('This mobile number is already registered to another account. Continue?')){ pf_msg.textContent = 'Save cancelled.'; return; }
+    const conflicts = phoneRes.docs.filter(d => d.id !== currentUser.uid);
+
+    if (conflicts.length > 0) {
+      if (!confirm(`This phone is used by another account. Claim it? (Other account will be removed)`)) {
+        pf_msg.textContent = 'Cancelled.';
+        return;
+      }
     }
 
-    await setDoc(uRef, {
-      name,
-      city,
-      phone,
-      group,
-      email: currentUser.email || null,
-      createdAt: currentUser.createdAt || serverTimestamp(),
-      isAdmin: currentUser.isAdmin || false
-    }, { merge: true });
+    const authEmail = currentUser.email || null;
+    const newEmail = authEmail; 
+    const oldEmailKey = currentUser.emailKey || (currentUser.email ? encodeURIComponent(currentUser.email.trim().toLowerCase()) : null);
+    const newEmailKey = newEmail ? encodeURIComponent(newEmail.trim().toLowerCase()) : null;
+    const willChangeEmail = (!!newEmailKey) && (newEmailKey !== oldEmailKey);
 
-    pf_msg.textContent = 'Profile saved.';
-    hideProfileForm();
-    const ud = await getDoc(uRef);
-    if(ud.exists()) currentUser = { uid: currentUser.uid, ...ud.data() };
-    profileName.textContent = currentUser.name ? disp(currentUser.name) : (currentUser.email ? disp(currentUser.email) : '—');
-    profileMeta.textContent = (currentUser.group ? disp(currentUser.group)+' • ' : '') + (currentUser.city ? disp(currentUser.city) : '');
+    const batch = writeBatch(db);
+    const userRef = doc(db, 'users', currentUser.uid);
+
+    if (willChangeEmail) {
+      const mappedRef = doc(db, 'emails', newEmailKey);
+      const mappedSnap = await getDoc(mappedRef);
+      if (mappedSnap.exists() && mappedSnap.data().uid !== currentUser.uid) {
+        pf_msg.textContent = 'Email unavailable.';
+        return;
+      }
+      batch.set(mappedRef, { uid: currentUser.uid, email: newEmail, emailKey: newEmailKey });
+      if (oldEmailKey) {
+        const oldRef = doc(db, 'emails', oldEmailKey);
+        batch.delete(oldRef);
+      }
+    }
+
+    for (const docSnap of conflicts) {
+      batch.delete(doc(db, 'users', docSnap.id));
+      const other = docSnap.data();
+      if (other && other.emailKey) batch.delete(doc(db, 'emails', other.emailKey));
+    }
+
+    const userPayload = {
+      name: name || null,
+      age: age || null,
+      city: city || null,
+      phone: phone,
+      group: group || null,
+      email: newEmail || currentUser.email || null,
+      emailKey: newEmailKey || oldEmailKey || null,
+      isAdmin: currentUser.isAdmin || false,
+      createdAt: currentUser.createdAt || serverTimestamp()
+    };
+
+    batch.set(userRef, userPayload, { merge: true });
+    await batch.commit();
+
+    const ud = await getDoc(userRef);
+    if (ud.exists()) currentUser = { uid: currentUser.uid, ...ud.data() };
+
+    pf_msg.textContent = 'Saved.';
+    hideEditForm();
+
+    profileName.textContent = currentUser.name ? h(currentUser.name) : (currentUser.email ? h(currentUser.email) : 'Anonymous');
+    profileMeta.textContent = (currentUser.group ? h(currentUser.group) + ' • ' : '') + (currentUser.city ? h(currentUser.city) : '');
+
+    renderPublicTabs();
+    renderGroup(activeGroup || 'ALL');
+    renderSummary();
+    renderAdminPanel();
   }catch(err){
     console.error('Save profile error', err);
-    pf_msg.textContent = 'Save failed: ' + (err.message || err.code);
+    pf_msg.textContent = 'Error: ' + err.message;
   }
 });
 
-/* Skip profile */
-pf_skip.addEventListener('click', ()=> {
-  if(confirm('Skip finishing profile? You can complete later from your account.')) {
-    hideProfileForm();
-    profileArea.style.display = 'block';
-  }
-});
+pf_cancel.addEventListener('click', ()=> { if(confirm('Discard changes?')) hideEditForm(); });
 
-/* render UI functions */
+/* Render helpers */
 function renderSummary(){
-  groupSummary.textContent = GROUPS.map(g=> `${g}: ${users.filter(u=>u.group===g).length}`).join(' • ');
+  const filtered = users.filter(u => u.phone);
+  groupSummary.textContent = GROUPS.map(g=> `${g}: ${filtered.filter(u=>u.group===g).length}`).join(' • ');
 }
+
 let activeGroup = 'ALL';
 function renderPublicTabs(){
   tabsEl.innerHTML = '';
-  const all = document.createElement('span'); all.className='tab'; all.textContent = `ALL (${users.length})`; all.onclick = ()=>{ activeGroup='ALL'; renderPublicTabs(); renderGroup('ALL'); };
+  const filteredAllCount = users.filter(u => u.phone).length;
+  const all = document.createElement('span'); all.className='tab'; all.textContent = `All Donors (${filteredAllCount})`; all.onclick = ()=>{ activeGroup='ALL'; renderPublicTabs(); renderGroup('ALL'); };
+  if('ALL'===activeGroup) all.classList.add('active');
   tabsEl.appendChild(all);
+  
   GROUPS.forEach(g=>{
-    const n = users.filter(u=>u.group===g).length;
+    const n = users.filter(u => u.phone && u.group===g).length;
     const t = document.createElement('span'); t.className='tab'; t.textContent = `${g} (${n})`; t.onclick = ()=>{ activeGroup=g; renderPublicTabs(); renderGroup(g); };
     if(g===activeGroup) t.classList.add('active');
     tabsEl.appendChild(t);
@@ -306,63 +699,64 @@ function renderPublicTabs(){
 function renderGroup(groupKey){
   const q = (searchInput.value||'').toLowerCase().trim();
   let list = groupKey === 'ALL' ? users.slice() : users.filter(u=>u.group === groupKey);
+  list = list.filter(u => u.phone && String(u.phone).trim() !== '');
   if(q) list = list.filter(u=> (u.name||'').toLowerCase().includes(q) || (u.city||'').toLowerCase().includes(q) || (u.phone||'').toLowerCase().includes(q));
+  
   listContainer.innerHTML = '';
-  if(!list.length){ listContainer.innerHTML = `<div class="small">No donors found.</div>`; return; }
+  if(!list.length){ listContainer.innerHTML = `<div style="padding:20px; color:var(--text-muted); text-align:center;">No donors found in this group.</div>`; return; }
+
   list.forEach(u=>{
     const phone = u.phone ? u.phone.toString().trim() : '';
-    const callHtml = phone
-      ? `<a class="callBtn" href="tel:${encodeURIComponent(phone)}">${h(phone)}</a>`
-      : `<span class="callBtn disabled">No phone</span>`;
-
-    const adminDeleteBtn = (currentUser && currentUser.isAdmin) ? ` <button class="btn ghost del" data-phone="${phone}">Delete</button>` : '';
-
+    // Styling classes updated for mindblowing look
+    const callHtml = phone ? `<a class="callBtn" href="tel:${encodeURIComponent(phone)}">Call ${h(phone)}</a>` : `<span class="callBtn disabled">No phone</span>`;
+    const deleteBtn = (currentUser && currentUser.isAdmin) ? ` <button class="btn ghost del" style="margin-top:5px; font-size:11px; padding:6px;" data-uid="${u.uid}">Remove</button>` : '';
+    
+    // Rotate trick: The pill is rotated -45deg in CSS. We need the text inside to be rotated back 45deg so it's upright.
+    const groupBadge = `<div class="pill"><div style="transform:rotate(45deg)">${h(u.group||'?')}</div></div>`;
+    
     const d = document.createElement('div'); d.className='donor';
-    d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
-      <div><div class="donorName">${disp(u.name)}</div><div class="donorMeta">${disp(u.city)}</div></div>
-      <div style="text-align:right"><div class="pill">${disp(u.group)}</div></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
-      <div class="donorMeta">Registered: ${safeDate(u.createdAt)}</div>
-      <div>${callHtml}${adminDeleteBtn}</div>
-    </div>`;
+    d.innerHTML = `
+      <div style="display:flex; justify-content:space-between;">
+        <div>
+           ${groupBadge}
+           <div class="donorName">${u.name ? h(u.name) : (u.email ? h(u.email) : 'Anonymous')}</div>
+           <div class="donorMeta">${h(u.city||'Unknown City')}</div>
+           <div class="donorMeta" style="margin-top:4px; font-size:12px;">Age: ${u.age ? h(u.age) : '—'}</div>
+        </div>
+      </div>
+      <div>
+        ${callHtml}${deleteBtn}
+      </div>`;
     listContainer.appendChild(d);
   });
 
   document.querySelectorAll('.del').forEach(b=> b.onclick = async (e) => {
-    const ph = e.target.dataset.phone;
-    if(!confirm('Delete user '+ph+'?')) return;
-    const docToDelete = users.find(x=> (x.phone||'').toString() === (ph||'').toString());
-    if(docToDelete){
-      await deleteDoc(doc(db,'users', docToDelete.uid));
-      alert('Deleted in Firestore.');
-    }
+    const uid = e.target.dataset.uid;
+    if(!confirm('Delete user doc for '+uid+'?')) return;
+    await deleteDoc(doc(db,'users', uid));
   });
 }
 
-/* admin table */
 function renderAdminPanel(){
   if(!currentUser || !currentUser.isAdmin) return;
   adminPanel.innerHTML = '<h4 style="margin-top:0">Admin Controls</h4>';
-  let html = '<table><thead><tr><th>#</th><th>Name</th><th>City</th><th>Group</th><th>Phone</th><th>Actions</th></tr></thead><tbody>';
-  users.forEach((u,i)=> html += `<tr><td>${i+1}</td><td>${disp(u.name)}</td><td>${disp(u.city)}</td><td>${disp(u.group)}</td><td>${disp(u.phone)}</td><td><button class="btn ghost adminDel" data-uid="${u.uid}">Delete</button></td></tr>`);
+  let html = '<table class="adminTable"><thead><tr><th>Name</th><th>City</th><th>Grp</th><th>Action</th></tr></thead><tbody>';
+  users.forEach((u,i)=> html += `<tr><td>${h(u.name||u.email||'Anon')}</td><td>${h(u.city||'—')}</td><td>${h(u.group||'—')}</td><td><button class="btn ghost adminDel" style="padding:4px 8px; font-size:11px;" data-uid="${u.uid}">Del</button></td></tr>`);
   html += '</tbody></table>';
   adminPanel.innerHTML += html;
   document.querySelectorAll('.adminDel').forEach(b=>{
     b.onclick = async (e) => {
       const uid = e.target.dataset.uid;
-      if(!confirm('Delete user doc for '+uid+'?')) return;
+      if(!confirm('Delete '+uid+'?')) return;
       await deleteDoc(doc(db,'users', uid));
-      alert('User document deleted. Deleting Auth account requires Admin SDK/server.');
     };
   });
 }
 
-/* render user panel */
 function renderUserPanel(){
   if(!currentUser) { userPanel.innerHTML = '—'; return; }
   const displayName = currentUser.name || currentUser.phone || currentUser.email || 'User';
-  userPanel.innerHTML = `<div class="small">Logged in as <strong>${h(displayName)}</strong></div>`;
+  // Updated text in sidebar instead
 }
 
 /* handlers */
@@ -372,7 +766,6 @@ refreshBtn.addEventListener('click', ()=> { renderPublicTabs(); renderGroup(acti
 /* initial */
 renderPublicTabs();
 renderGroup('ALL');
-
 </script>
 </body>
 </html>
