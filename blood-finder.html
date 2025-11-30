@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Blood Group Finder — Directory (Firebase)</title>
+<style>
+  :root{
+    --bg:#f5f9fc;--panel:#fff;--muted:#4b5563;--accent:#d43b48;--accent-2:#96223b;--radius:12px
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),#eef6fb);color:#0f172a;min-height:100vh;padding:18px;display:flex;justify-content:center}
+  .wrap{width:100%;max-width:1100px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;gap:12px;align-items:center}
+  .logo{width:62px;height:62px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:white;display:flex;align-items:center;justify-content:center;font-weight:800}
+  h1{margin:0;font-size:20px}
+  .main{display:grid;grid-template-columns:360px 1fr;gap:18px;margin-top:18px}
+  .panel{background:var(--panel);border-radius:var(--radius);padding:14px;border:1px solid rgba(2,6,23,0.03);box-shadow:0 10px 30px rgba(2,6,23,0.06)}
+  .small{font-size:13px;color:var(--muted)}
+  .btn{padding:10px 12px;border-radius:10px;border:0;background:var(--accent);color:white;cursor:pointer;font-weight:700}
+  .btn.ghost{background:transparent;border:1px solid rgba(2,6,23,0.06);color:var(--muted)}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{padding:8px 10px;border-radius:10px;background:rgba(0,0,0,0.03);cursor:pointer;font-weight:700}
+  .tab.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white}
+  .searchRow{display:flex;gap:8px;margin-top:12px}
+  .searchRow input{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(2,6,23,0.06)}
+  .donor{padding:12px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfbff);border:1px solid rgba(2,6,23,0.03);margin-bottom:10px}
+  .donorName{font-weight:700}
+  .donorMeta{color:var(--muted);font-size:13px}
+  .pill{padding:6px 8px;border-radius:8px;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;font-weight:700}
+  label{display:block;margin-top:8px;color:var(--muted)}
+  input, select {width:100%;padding:10px;border-radius:8px;border:1px solid rgba(2,6,23,0.06);margin-top:6px}
+  .hidden{display:none}
+  .note{font-size:13px;color:var(--muted);margin-top:8px}
+  .callBtn{padding:8px 10px;border-radius:8px;border:1px solid rgba(2,6,23,0.06);background:transparent;color:var(--accent);font-weight:700;cursor:pointer}
+  .callBtn.disabled{opacity:0.55;cursor:not-allowed;color:var(--muted);border-style:dashed}
+  @media(max-width:980px){.main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><div class="logo">BG</div><div><h1>Blood Group Finder</h1><div class="small">Tap Call to contact donors</div></div></div>
+      <div id="topControls" class="small">Realtime • Firebase</div>
+    </header>
+
+    <div class="main">
+      <!-- left: auth/profile -->
+      <aside>
+        <div class="panel" id="authPanel">
+          <h3 style="margin:0 0 6px">Status</h3>
+          <div id="authStatus" class="small">Checking auth...</div>
+
+          <!-- Profile display -->
+          <div id="profileArea" style="margin-top:10px;display:none">
+            <div id="profileName" style="font-weight:700">—</div>
+            <div id="profileMeta" class="small">—</div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button class="btn" id="btnBack">Back to Login</button>
+              <button class="btn ghost" id="btnLogout">Logout</button>
+            </div>
+          </div>
+
+          <!-- PROFILE FORM for missing details -->
+          <div id="profileForm" class="hidden" style="margin-top:12px">
+            <h4 style="margin:0 0 6px">Complete your donor profile</h4>
+            <label>Full name</label>
+            <input id="pf_name" placeholder="Your full name" />
+            <label>City</label>
+            <input id="pf_city" placeholder="City/locality" />
+            <label>Mobile</label>
+            <input id="pf_phone" placeholder="Mobile number" inputmode="tel" />
+            <label>Blood group</label>
+            <select id="pf_group">
+              <option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+            </select>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button id="pf_save" class="btn">Save Profile</button>
+              <button id="pf_skip" class="btn ghost">Skip</button>
+            </div>
+            <div id="pf_msg" class="note"></div>
+          </div>
+        </div>
+
+        <div class="panel" id="summaryPanel" style="margin-top:14px;display:none">
+          <h3 style="margin-top:0">Group Summary</h3>
+          <div id="groupSummary" class="small">Loading…</div>
+        </div>
+      </aside>
+
+      <!-- right: directory -->
+      <section>
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div class="tabs" id="tabs"></div>
+              <div class="searchRow"><input id="searchInput" placeholder="Search name, city or phone" /><button id="refreshBtn" class="btn ghost">Refresh</button></div>
+            </div>
+            <div id="userPanel" class="small" style="text-align:right">—</div>
+          </div>
+
+          <div id="listContainer" style="margin-top:12px"></div>
+
+          <div id="adminPanel" style="display:none;margin-top:12px"></div>
+        </div>
+      </section>
+    </div>
+
+    <div style="margin-top:14px" class="small">Note: to grant admin, set <code>isAdmin: true</code> on the user's Firestore document in the Firebase console.</div>
+  </div>
+
+<script type="module">
+/* Firebase imports */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, collection, query, orderBy, onSnapshot, deleteDoc, where, getDocs, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+/* ===== Firebase config (fluneblood) ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyB3xlua10Vnqrf0kXrwXa-I02nkVSC8nWo",
+  authDomain: "fluneblood.firebaseapp.com",
+  projectId: "fluneblood",
+  storageBucket: "fluneblood.firebasestorage.app",
+  messagingSenderId: "617024386176",
+  appId: "1:617024386176:web:b87ee71140ad1adba8a265",
+  measurementId: "G-751TFG0GZQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* DOM helpers */
+const $ = id => document.getElementById(id);
+
+/* Small safe display helpers */
+function h(s){ return (s||'').toString().replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function disp(s){ return s ? h(s) : '—'; }
+function safeDate(ts){
+  if(!ts) return '—';
+  try{
+    if(typeof ts.toDate === 'function') return ts.toDate().toLocaleDateString();
+    if(ts.seconds) return new Date(ts.seconds*1000).toLocaleDateString();
+    return new Date(ts).toLocaleDateString();
+  }catch(e){ return '—'; }
+}
+
+/* Elements */
+const authStatus = $('authStatus'), profileArea = $('profileArea'), profileName = $('profileName'), profileMeta = $('profileMeta');
+const btnBack = $('btnBack'), btnLogout = $('btnLogout');
+const profileForm = $('profileForm'), pf_name = $('pf_name'), pf_city = $('pf_city'), pf_phone = $('pf_phone'), pf_group = $('pf_group'), pf_save = $('pf_save'), pf_skip = $('pf_skip'), pf_msg = $('pf_msg');
+const summaryPanel = $('summaryPanel'), groupSummary = $('groupSummary');
+const tabsEl = $('tabs'), listContainer = $('listContainer');
+const searchInput = $('searchInput'), refreshBtn = $('refreshBtn');
+const userPanel = $('userPanel'), adminPanel = $('adminPanel');
+
+/* State */
+let users = [];
+let currentUser = null;
+const GROUPS = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
+
+/* Buttons */
+btnBack.addEventListener('click', ()=> location.href = 'index.html');
+btnLogout.addEventListener('click', async ()=> { if(confirm('Sign out?')) await signOut(auth); });
+
+/* Real-time users listener */
+const usersCol = collection(db, 'users');
+const usersQuery = query(usersCol, orderBy('createdAt','desc'));
+onSnapshot(usersQuery, snapshot => {
+  users = snapshot.docs.map(d => ({ uid: d.id, ...d.data() }));
+  renderPublicTabs();
+  renderGroup(activeGroup || 'ALL');
+  renderSummary();
+  renderAdminPanel();
+});
+
+/* Auth check and profile flow */
+onAuthStateChanged(auth, async (user) => {
+  if(user){
+    try{
+      const uRef = doc(db, 'users', user.uid);
+      const uSnap = await getDoc(uRef);
+      const docData = uSnap.exists() ? uSnap.data() : null;
+      currentUser = { uid: user.uid, email: user.email, ...docData };
+
+      authStatus.textContent = 'Signed in';
+      profileArea.style.display = 'block';
+      profileName.textContent = currentUser.name ? disp(currentUser.name) : (currentUser.email ? disp(currentUser.email) : '—');
+      profileMeta.textContent = (currentUser.group ? disp(currentUser.group)+' • ' : '') + (currentUser.city ? disp(currentUser.city) : '');
+
+      const missing = !currentUser.city || !currentUser.phone || !currentUser.group;
+      if(missing){
+        showProfileForm(currentUser);
+      } else {
+        hideProfileForm();
+      }
+
+      if(currentUser.isAdmin){ summaryPanel.style.display = 'block'; adminPanel.style.display = 'block'; } else { summaryPanel.style.display = 'none'; adminPanel.style.display = 'none'; }
+      renderUserPanel();
+    }catch(err){
+      console.error('Error loading user doc', err);
+      currentUser = { uid: user.uid, email: user.email };
+      profileName.textContent = currentUser.email ? disp(currentUser.email) : '—';
+      profileMeta.textContent = '';
+      showProfileForm(currentUser);
+      profileArea.style.display = 'block';
+    }
+  } else {
+    currentUser = null;
+    authStatus.textContent = 'Not signed in';
+    profileArea.style.display = 'none';
+    hideProfileForm();
+    summaryPanel.style.display = 'none';
+    adminPanel.style.display = 'none';
+    renderPublicTabs();
+    renderGroup('ALL');
+  }
+});
+
+/* Show / hide profile form */
+function showProfileForm(prefill){
+  profileForm.classList.remove('hidden');
+  profileArea.style.display = 'none';
+  pf_name.value = prefill && prefill.name ? prefill.name : '';
+  pf_city.value = prefill && prefill.city ? prefill.city : '';
+  pf_phone.value = prefill && prefill.phone ? prefill.phone : '';
+  pf_group.value = prefill && prefill.group ? prefill.group : '';
+  pf_msg.textContent = 'Please complete these details to appear in donor list.';
+}
+
+function hideProfileForm(){
+  profileForm.classList.add('hidden');
+  profileArea.style.display = 'block';
+  pf_msg.textContent = '';
+}
+
+/* Save profile action */
+pf_save.addEventListener('click', async ()=>{
+  if(!currentUser || !currentUser.uid){ pf_msg.textContent = 'Not authenticated.'; return; }
+  const name = (pf_name.value||'').trim();
+  const city = (pf_city.value||'').trim();
+  const phone = (pf_phone.value||'').trim();
+  const group = (pf_group.value||'').trim();
+  if(!city || !phone || !group){ pf_msg.textContent = 'City, Mobile and Blood group are required.'; return; }
+  pf_msg.textContent = 'Saving…';
+  try{
+    const uRef = doc(db, 'users', currentUser.uid);
+    // optional duplicate phone check
+    const phoneQ = query(collection(db,'users'), where('phone','==', phone));
+    const phoneRes = await getDocs(phoneQ);
+    if(!phoneRes.empty){
+      const conflict = phoneRes.docs.some(d => d.id !== currentUser.uid);
+      if(conflict && !confirm('This mobile number is already registered to another account. Continue?')){ pf_msg.textContent = 'Save cancelled.'; return; }
+    }
+
+    await setDoc(uRef, {
+      name,
+      city,
+      phone,
+      group,
+      email: currentUser.email || null,
+      createdAt: currentUser.createdAt || serverTimestamp(),
+      isAdmin: currentUser.isAdmin || false
+    }, { merge: true });
+
+    pf_msg.textContent = 'Profile saved.';
+    hideProfileForm();
+    const ud = await getDoc(uRef);
+    if(ud.exists()) currentUser = { uid: currentUser.uid, ...ud.data() };
+    profileName.textContent = currentUser.name ? disp(currentUser.name) : (currentUser.email ? disp(currentUser.email) : '—');
+    profileMeta.textContent = (currentUser.group ? disp(currentUser.group)+' • ' : '') + (currentUser.city ? disp(currentUser.city) : '');
+  }catch(err){
+    console.error('Save profile error', err);
+    pf_msg.textContent = 'Save failed: ' + (err.message || err.code);
+  }
+});
+
+/* Skip profile */
+pf_skip.addEventListener('click', ()=> {
+  if(confirm('Skip finishing profile? You can complete later from your account.')) {
+    hideProfileForm();
+    profileArea.style.display = 'block';
+  }
+});
+
+/* render UI functions */
+function renderSummary(){
+  groupSummary.textContent = GROUPS.map(g=> `${g}: ${users.filter(u=>u.group===g).length}`).join(' • ');
+}
+let activeGroup = 'ALL';
+function renderPublicTabs(){
+  tabsEl.innerHTML = '';
+  const all = document.createElement('span'); all.className='tab'; all.textContent = `ALL (${users.length})`; all.onclick = ()=>{ activeGroup='ALL'; renderPublicTabs(); renderGroup('ALL'); };
+  tabsEl.appendChild(all);
+  GROUPS.forEach(g=>{
+    const n = users.filter(u=>u.group===g).length;
+    const t = document.createElement('span'); t.className='tab'; t.textContent = `${g} (${n})`; t.onclick = ()=>{ activeGroup=g; renderPublicTabs(); renderGroup(g); };
+    if(g===activeGroup) t.classList.add('active');
+    tabsEl.appendChild(t);
+  });
+}
+
+function renderGroup(groupKey){
+  const q = (searchInput.value||'').toLowerCase().trim();
+  let list = groupKey === 'ALL' ? users.slice() : users.filter(u=>u.group === groupKey);
+  if(q) list = list.filter(u=> (u.name||'').toLowerCase().includes(q) || (u.city||'').toLowerCase().includes(q) || (u.phone||'').toLowerCase().includes(q));
+  listContainer.innerHTML = '';
+  if(!list.length){ listContainer.innerHTML = `<div class="small">No donors found.</div>`; return; }
+  list.forEach(u=>{
+    const phone = u.phone ? u.phone.toString().trim() : '';
+    const callHtml = phone
+      ? `<a class="callBtn" href="tel:${encodeURIComponent(phone)}">${h(phone)}</a>`
+      : `<span class="callBtn disabled">No phone</span>`;
+
+    const adminDeleteBtn = (currentUser && currentUser.isAdmin) ? ` <button class="btn ghost del" data-phone="${phone}">Delete</button>` : '';
+
+    const d = document.createElement('div'); d.className='donor';
+    d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <div><div class="donorName">${disp(u.name)}</div><div class="donorMeta">${disp(u.city)}</div></div>
+      <div style="text-align:right"><div class="pill">${disp(u.group)}</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+      <div class="donorMeta">Registered: ${safeDate(u.createdAt)}</div>
+      <div>${callHtml}${adminDeleteBtn}</div>
+    </div>`;
+    listContainer.appendChild(d);
+  });
+
+  document.querySelectorAll('.del').forEach(b=> b.onclick = async (e) => {
+    const ph = e.target.dataset.phone;
+    if(!confirm('Delete user '+ph+'?')) return;
+    const docToDelete = users.find(x=> (x.phone||'').toString() === (ph||'').toString());
+    if(docToDelete){
+      await deleteDoc(doc(db,'users', docToDelete.uid));
+      alert('Deleted in Firestore.');
+    }
+  });
+}
+
+/* admin table */
+function renderAdminPanel(){
+  if(!currentUser || !currentUser.isAdmin) return;
+  adminPanel.innerHTML = '<h4 style="margin-top:0">Admin Controls</h4>';
+  let html = '<table><thead><tr><th>#</th><th>Name</th><th>City</th><th>Group</th><th>Phone</th><th>Actions</th></tr></thead><tbody>';
+  users.forEach((u,i)=> html += `<tr><td>${i+1}</td><td>${disp(u.name)}</td><td>${disp(u.city)}</td><td>${disp(u.group)}</td><td>${disp(u.phone)}</td><td><button class="btn ghost adminDel" data-uid="${u.uid}">Delete</button></td></tr>`);
+  html += '</tbody></table>';
+  adminPanel.innerHTML += html;
+  document.querySelectorAll('.adminDel').forEach(b=>{
+    b.onclick = async (e) => {
+      const uid = e.target.dataset.uid;
+      if(!confirm('Delete user doc for '+uid+'?')) return;
+      await deleteDoc(doc(db,'users', uid));
+      alert('User document deleted. Deleting Auth account requires Admin SDK/server.');
+    };
+  });
+}
+
+/* render user panel */
+function renderUserPanel(){
+  if(!currentUser) { userPanel.innerHTML = '—'; return; }
+  const displayName = currentUser.name || currentUser.phone || currentUser.email || 'User';
+  userPanel.innerHTML = `<div class="small">Logged in as <strong>${h(displayName)}</strong></div>`;
+}
+
+/* handlers */
+searchInput.addEventListener('input', ()=> renderGroup(activeGroup));
+refreshBtn.addEventListener('click', ()=> { renderPublicTabs(); renderGroup(activeGroup); });
+
+/* initial */
+renderPublicTabs();
+renderGroup('ALL');
+
+</script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BGF — Email + Google Sign-in</title>
+<style>
+  :root{--bg:#f5f9fc;--accent:#d43b48;--accent-2:#96223b;--muted:#4b5563}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg),#eef6fb);color:#0f172a;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
+  .wrap{width:100%;max-width:720px}
+  .card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 10px 30px rgba(2,6,23,0.06);border:1px solid rgba(2,6,23,0.03)}
+  h1{margin:0 0 6px;font-size:20px}
+  p.lead{margin:0 0 12px;color:var(--muted)}
+  .cols{display:grid;grid-template-columns:1fr 360px;gap:18px}
+  @media(max-width:900px){ .cols{grid-template-columns:1fr} }
+  input,select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(2,6,23,0.06);margin-top:8px}
+  .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:white;cursor:pointer;font-weight:700}
+  .ghost{background:transparent;border:1px solid rgba(2,6,23,0.06);color:var(--muted);padding:10px;border-radius:10px}
+  .googleBtn{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid rgba(2,6,23,0.06);background:white;cursor:pointer}
+  .note{font-size:13px;color:var(--muted);margin-top:8px}
+  .debug{font-family:monospace;color:#b91c1c;margin-top:10px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="main" aria-labelledby="title">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h1 id="title">Blood Group Finder</h1>
+          <p class="lead">Register / Login with Email or continue with Google. After sign-in you'll go to the directory.</p>
+        </div>
+        <div style="text-align:right;color:var(--muted)">Secure • Firebase</div>
+      </div>
+
+      <div style="margin-top:12px" class="cols">
+        <!-- left: email form -->
+        <div>
+          <div style="background:linear-gradient(180deg,#fff,#fbfbff);padding:12px;border-radius:12px;border:1px solid rgba(2,6,23,0.03)">
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="Password (min 6)" autocomplete="current-password" />
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button id="actionBtn" class="btn">Register</button>
+              <button id="clearBtn" class="ghost">Clear</button>
+            </div>
+            <div style="margin-top:10px" class="note" id="msg"></div>
+            <div id="debug" class="debug" aria-live="polite"></div>
+            <div style="margin-top:8px" class="note">Tip: enable Email/Password and Google in Firebase Console and add <code>localhost</code> to Authorized domains.</div>
+          </div>
+        </div>
+
+        <!-- right: Google + quick info -->
+        <aside style="display:flex;flex-direction:column;gap:12px">
+          <div style="background:linear-gradient(180deg,#fff,#fbfbff);padding:12px;border-radius:12px;border:1px solid rgba(2,6,23,0.03)">
+            <div class="googleBtn" id="btnGoogle" role="button" aria-label="Continue with Google">
+              <svg width="20" height="20" viewBox="0 0 533.5 544.3"><path fill="#4285f4" d="M533.5 278.4c0-18.5-1.5-37.2-4.7-55.1H272v104.2h146.9c-6.4 34.6-25.9 64-55.2 83.6v69.6h89.1c52.1-47.9 82.7-118.8 82.7-202.3z"/><path fill="#34a853" d="M272 544.3c74 0 136.1-24.6 181.5-66.9l-89.1-69.6c-24.8 16.6-56.8 26.4-92.4 26.4-71 0-131.2-47.9-152.7-112.3H29.1v70.7C74.6 487.4 169.2 544.3 272 544.3z"/><path fill="#fbbc04" d="M119.3 328.2c-10.8-32.7-10.8-68 0-100.7v-70.7H29.1C10.3 203.6 0 239.3 0 276.4s10.3 72.8 29.1 106.9l90.2-55.1z"/><path fill="#ea4335" d="M272 108.8c39.8 0 75.6 13.7 103.8 40.6l77.7-77.7C405.7 24.5 344 0 272 0 169.2 0 74.6 56.9 29.1 142.1l90.2 70.7C140.8 156.7 201 108.8 272 108.8z"/></svg>
+              <strong>Continue with Google</strong>
+            </div>
+            <div class="note" style="margin-top:8px">If popup blocked, the app falls back to redirect mode automatically.</div>
+          </div>
+
+          <div style="background:linear-gradient(180deg,#fff,#fbfbff);padding:12px;border-radius:12px;border:1px solid rgba(2,6,23,0.03)">
+            <strong>How it works</strong>
+            <div class="note">After sign-in we create a `users/{uid}` doc (email & timestamp) if missing and redirect to <code>blood-finder.html</code>.</div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+// ---------- Firebase modular imports ----------
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+// ---------- Firebase config (your project) ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyB3xlua10Vnqrf0kXrwXa-I02nkVSC8nWo",
+  authDomain: "fluneblood.firebaseapp.com",
+  projectId: "fluneblood",
+  storageBucket: "fluneblood.firebasestorage.app",
+  messagingSenderId: "617024386176",
+  appId: "1:617024386176:web:b87ee71140ad1adba8a265",
+  measurementId: "G-751TFG0GZQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ---------- DOM elements ----------
+const emailInput = document.getElementById('email');
+const passInput = document.getElementById('password');
+const actionBtn = document.getElementById('actionBtn');
+const clearBtn = document.getElementById('clearBtn');
+const msg = document.getElementById('msg');
+const debugEl = document.getElementById('debug');
+const btnGoogle = document.getElementById('btnGoogle');
+
+// ---------- helpers ----------
+function showMessage(t){ msg.textContent = t || ''; }
+function debug(t){ console.log('[BGF]', t); debugEl.textContent = t || ''; }
+function redirectToFinder(){ window.location.href = 'blood-finder.html'; }
+
+// ensure minimal users/{uid} doc exists
+async function ensureUserDoc(user){
+  if(!user || !user.uid) return;
+  try{
+    const ref = doc(db, 'users', user.uid);
+    const snap = await getDoc(ref);
+    if(!snap.exists()){
+      await setDoc(ref, {
+        email: user.email || null,
+        createdAt: serverTimestamp(),
+        isAdmin: false
+      }, { merge: true });
+      debug('Created user doc for ' + user.uid);
+    } else debug('User doc already exists for ' + user.uid);
+  }catch(err){
+    console.error('ensureUserDoc error', err);
+    debug('Failed to create user doc: ' + (err.message||err.code));
+  }
+}
+
+// ---------- Email register/login ----------
+let mode = 'register'; // initial mode
+actionBtn.addEventListener('click', async () => {
+  const email = (emailInput.value||'').trim();
+  const password = passInput.value || '';
+  if(!email || !password){ showMessage('Enter email and password'); return; }
+  showMessage('Processing...');
+  debug('');
+  try{
+    if(mode === 'register'){
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      showMessage('Registered & signed in');
+      await ensureUserDoc(cred.user);
+      redirectToFinder();
+    } else {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      showMessage('Login successful');
+      await ensureUserDoc(cred.user);
+      redirectToFinder();
+    }
+  }catch(err){
+    console.error('Auth error', err);
+    // user-friendly messages for common codes
+    let text = err && err.message ? err.message : 'Auth failed';
+    if(err.code === 'auth/email-already-in-use') text = 'Email already registered — try Login.';
+    if(err.code === 'auth/invalid-email') text = 'Invalid email address.';
+    if(err.code === 'auth/weak-password') text = 'Weak password — use 6+ characters.';
+    if(err.code === 'auth/wrong-password') text = 'Wrong password.';
+    if(err.code === 'auth/user-not-found') text = 'No account found for this email.';
+    showMessage(text);
+    debug(JSON.stringify({ code: err.code, message: err.message }));
+  }
+});
+clearBtn.addEventListener('click', ()=>{ emailInput.value=''; passInput.value=''; showMessage(''); debug(''); });
+
+// Toggle mode when user clicks action button text (simple UX)
+actionBtn.addEventListener('contextmenu', (e)=>{ e.preventDefault(); mode = mode==='register' ? 'login' : 'register'; actionBtn.textContent = mode==='register' ? 'Register' : 'Login'; showMessage('Mode switched to '+mode); });
+
+// ---------- Google sign-in (popup -> redirect fallback) ----------
+btnGoogle.addEventListener('click', async () => {
+  showMessage('Opening Google sign-in...');
+  debug('Trying signInWithPopup...');
+  const provider = new GoogleAuthProvider();
+  try{
+    const result = await signInWithPopup(auth, provider);
+    debug('Popup sign-in success: ' + (result.user && result.user.uid));
+    await ensureUserDoc(result.user);
+    redirectToFinder();
+  }catch(err){
+    console.warn('Popup error', err.code || err.message);
+    debug('Popup failed: ' + (err.code || err.message) + ' — attempting redirect fallback');
+    // fallback to redirect (works when popup blocked)
+    try{
+      await signInWithRedirect(auth, provider);
+      // page will navigate to Google; after redirect, onAuthStateChanged and getRedirectResult handle the rest
+    }catch(e2){
+      console.error('Redirect fallback failed', e2);
+      showMessage('Google sign-in failed: ' + (e2.message || e2.code));
+    }
+  }
+});
+
+// handle redirect result (best-effort; onAuthStateChanged will also run)
+(async function handleRedirectResult(){
+  try{
+    const res = await getRedirectResult(auth);
+    if(res && res.user){
+      debug('getRedirectResult user: ' + res.user.uid);
+      await ensureUserDoc(res.user);
+      redirectToFinder();
+    }
+  }catch(e){
+    // silent; handled by onAuthStateChanged fallback
+    debug('getRedirectResult err: ' + (e && (e.code||e.message)));
+  }
+})();
+
+// ---------- auth state: redirect if already signed in ----------
+onAuthStateChanged(auth, async (user) => {
+  if(user){
+    debug('onAuthStateChanged signed in: ' + user.uid);
+    await ensureUserDoc(user);
+    // small delay to show message then redirect
+    showMessage('Signed in — redirecting...');
+    setTimeout(()=> redirectToFinder(), 500);
+  } else {
+    debug('Not signed in');
+  }
+});
+</script>
+</body>
+</html>
